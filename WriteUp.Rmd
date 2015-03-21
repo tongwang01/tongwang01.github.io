@@ -49,4 +49,4 @@ confusionMatrix(testing$classe, predict(fit1, testingPP))
 confusionMatrix(testing$classe, predict(fit2, testingPP))
 ```
 
-The prediction accurary of the random forest model (0.99) is significantly higher than that of the decision tree model (0.50). We will therefore adopt the random forest model fit2. The estimated out-of-sample error rate is 0.0059.
+The prediction accurary of the random forest model (0.99) is significantly higher than that of the decision tree model (0.49). We will therefore adopt the random forest model fit2. The estimated out-of-sample error rate is 0.0059.
