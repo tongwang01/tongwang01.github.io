@@ -1,0 +1,52 @@
+Human Activity Recognition Analysis
+========================================================
+
+In this analysis we model the Weight Lifting Exercise dataset in the Human Activity Recognition project.
+
+```{r load, results="hide", message=FALSE}
+#Load the data set
+library(caret);library(rattle);set.seed(123)
+df <- read.csv("pml-training.csv", na.strings = c(NA, "NA", "#DIV/0!", '""'))
+```
+
+This dataset contains many NA values. We remove columns where more than 50% of the values are NA. We also remove from the dataset columns that will not be used in the modeling, such as timestamp and the names of subjects.
+
+```{r clean, message=FALSE}
+df.na <- is.na(df); df.na <- data.frame(df.na); cm <- colMeans(df.na) #Calculate NA percentage for each colume
+df.use <- df[,cm<=0.5]  #Keep only columns with less than half NAs
+df.use <- df.use[,8:60] #Remove columns not used in modeling
+```
+
+Create training and testing sets.
+```{r creatTraiingSet, message=FALSE}
+train <- createDataPartition(y=df.use$classe, p=0.75, list=FALSE)
+training <- df.use[train,]
+testing <- df.use[-train,]
+```
+
+Proprocess the data by imputing the remaining NA values with knn.
+```{r preProc, message=FALSE}
+preProc <- preProcess(training[,-53], method = c("knnImpute"))
+trainingPP <- predict(preProc,training[,-53])
+testingPP <- predict(preProc,testing[,-53])
+```
+
+We will fit two models on the training set and compare their predictive powers on the testing set. The first is a decision tree model, the second is a random forest model. For the latter we limit the number of trees to 50 to reduce computation time. 
+```{r models, message=FALSE}
+fit1 <- train(training$classe~., data=trainingPP, method = "rpart")  #Decision tree model
+fit2 <- train(training$classe~., data = trainingPP, method="rf", ntree=50) #Random forest model
+```
+
+Both models are selected among their classes by cross validation. 
+```{r plots, echo=FALSE, message=FALSE}
+plot(fit1)
+plot(fit2)
+```
+
+Now we will evaluate their respective predictive powers on the testing set.
+```{r testing, message=FALSE}
+confusionMatrix(testing$classe, predict(fit1, testingPP))
+confusionMatrix(testing$classe, predict(fit2, testingPP))
+```
+
+The prediction accurary of the random forest model (0.99) is significantly higher than that of the decision tree model (0.50). We will therefore adopt the random forest model fit2. The estimated out-of-sample error rate is 0.0059.
